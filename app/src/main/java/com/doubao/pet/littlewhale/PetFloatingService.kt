@@ -46,6 +46,7 @@ class PetFloatingService : Service() {
     private var menuView: View? = null
     private lateinit var prefs: SharedPreferences
     private var petSize = 180
+    private var placeholderBitmap: Bitmap? = null
 
     private val defaultBubbleTexts = listOf("你好呀", "今天也要加油哦", "摸摸~")
     private var bubbleTexts: List<String> = defaultBubbleTexts
@@ -113,13 +114,15 @@ class PetFloatingService : Service() {
 
     private val animationRunnable = object : Runnable {
         override fun run() {
-            val frames = if (isPlayingCustom && customFrames.isNotEmpty()) customFrames else getCurrentIdleFrames()
+            var frames = if (isPlayingCustom && customFrames.isNotEmpty()) customFrames else getCurrentIdleFrames()
             if (frames.isEmpty()) { handler.postDelayed(this, 100); return }
             if (currentFrame >= frames.size) {
                 if (isPlayingCustom) {
                     isPlayingCustom = false
                     customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = emptyList(); currentFrame = 0
+                    frames = getCurrentIdleFrames()
+                    if (frames.isEmpty()) { handler.postDelayed(this, 100); return }
                 } else currentFrame = 0
             }
             if (currentFrame < frames.size) {
@@ -280,7 +283,8 @@ class PetFloatingService : Service() {
         petView = LayoutInflater.from(this).inflate(R.layout.pet_floating, null)
         ivPet = petView.findViewById(R.id.ivPet)
         tvBubble = petView.findViewById(R.id.tvBubble)
-        ivPet.setImageBitmap(createPlaceholderBitmap())
+        placeholderBitmap = createPlaceholderBitmap()
+        ivPet.setImageBitmap(placeholderBitmap)
         val overlayType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
@@ -348,6 +352,8 @@ class PetFloatingService : Service() {
         try { windowManager.removeView(petView) } catch (_: Exception) {}
         currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
+        placeholderBitmap = null
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
