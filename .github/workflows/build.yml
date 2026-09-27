@@ -4,12 +4,17 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - name: Download latest APK
-        run: wget -q -O pet-generator-latest.apk "https://aka.doubaocdn.com/s/YaXVOvfBnu"
+        run: |
+          curl -L -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/YaXVOvfBnu"
+          ls -la pet-generator-latest.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -41,5 +46,3 @@ jobs:
             - 增加GIF尺寸为0时的保护
             - 修复占位图标Bitmap未回收
           files: pet-generator-latest.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
