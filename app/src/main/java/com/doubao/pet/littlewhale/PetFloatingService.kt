@@ -150,17 +150,29 @@ class PetFloatingService : Service() {
     private var initialX = 0; private var initialY = 0
     private var initialTouchX = 0f; private var initialTouchY = 0f
     private var isDragging = false; private var downTime = 0L
+    private var longPressTriggered = false
+    private val longPressRunnable = Runnable {
+        if (!isDragging) {
+            longPressTriggered = true
+            showEmojiMenu()
+        }
+    }
 
     private val touchListener = View.OnTouchListener { _, event ->
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 initialX = layoutParams?.x ?: 0; initialY = layoutParams?.y ?: 0
                 initialTouchX = event.rawX; initialTouchY = event.rawY
-                isDragging = false; downTime = System.currentTimeMillis(); true
+                isDragging = false; longPressTriggered = false
+                downTime = System.currentTimeMillis()
+                handler.postDelayed(longPressRunnable, 350)
+                true
             }
             MotionEvent.ACTION_MOVE -> {
                 val dx = event.rawX - initialTouchX; val dy = event.rawY - initialTouchY
-                if (Math.abs(dx) > 10 || Math.abs(dy) > 10) isDragging = true
+                if (Math.abs(dx) > 25 || Math.abs(dy) > 25) {
+                    if (!isDragging) { isDragging = true; handler.removeCallbacks(longPressRunnable) }
+                }
                 if (isDragging) {
                     layoutParams?.x = initialX + dx.toInt(); layoutParams?.y = initialY + dy.toInt()
                     try { windowManager.updateViewLayout(petView, layoutParams) } catch (_: Exception) {}
@@ -168,11 +180,12 @@ class PetFloatingService : Service() {
                 true
             }
             MotionEvent.ACTION_UP -> {
+                handler.removeCallbacks(longPressRunnable)
                 val duration = System.currentTimeMillis() - downTime
-                if (!isDragging && duration < 500) playNextGif()
-                else if (!isDragging && duration >= 500) showEmojiMenu()
+                if (!isDragging && !longPressTriggered && duration < 350) playNextGif()
                 true
             }
+            MotionEvent.ACTION_CANCEL -> { handler.removeCallbacks(longPressRunnable); true }
             else -> false
         }
     }
