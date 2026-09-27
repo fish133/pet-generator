@@ -6,51 +6,30 @@
 
 ## 下载
 
-[v2.0.7 安卓 APK（5.6MB）](https://aka.doubaocdn.com/s/YaXVOvfBnu) — 直接下载安装即可使用
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.0.7，5.6MB）
 
-**v2.0.7 修复内容：**
-- 修复点击切换 GIF 播放完毕后访问已回收位图导致的崩溃
-- 修复 GIF 解析时 inputStream 未安全关闭的资源泄漏
-- 修复帧缩放时临时 Bitmap 未回收的内存泄漏
-- 增加 GIF 尺寸为 0 时的保护，避免崩溃
-- 修复占位图标 Bitmap 未回收的内存泄漏
+也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
+
+**v2.0.7 修复：**
+- 修复点击切换GIF播放完毕后访问已回收位图导致的崩溃
+- 修复GIF解析时inputStream未安全关闭的资源泄漏
+- 修复帧缩放时临时Bitmap未回收的内存泄漏
+- 增加GIF尺寸为0时的保护
+- 修复占位图标Bitmap未回收
 
 ## 功能特性
 
-- 上传 GIF 即桌宠：从相册选择任意 GIF，自动拆帧（最多15帧），变成桌宠动画
-- 点击互动：短按桌宠切换到下一个 GIF 播放
-- 长按菜单：长按打开表情菜单，切换当前待机 GIF、长按删除、关闭桌宠
+- 上传 GIF 即桌宠：从相册选择任意 GIF，自动拆帧（最多15帧）
+- 短按桌宠切换到下一个 GIF 播放
+- 长按打开表情菜单，切换待机 GIF、长按删除、关闭桌宠
 - 自定义大小：滑块调节 80~400dp
 - 自言自语气泡：自定义文案（每行一句），10~40秒随机弹出
 - 自由拖动：按住桌宠拖到屏幕任意位置
-- 多 GIF 管理：支持上传多个 GIF，按需切换，内存友好（只加载当前播放的帧）
+- 多 GIF 管理：按需切换，内存友好（只加载当前播放的帧）
 
 ## 系统要求
 
-- Android 7.0（API 24）及以上
-- 已测试兼容 Android 16
-
-## 构建方法
-
-### 环境要求
-- JDK 17
-- Android SDK（platform 34，build-tools 34）
-- Gradle 8.2
-
-### 步骤
-
-1. 生成应用图标（需要 Python3 + Pillow）：
-```bash
-pip install Pillow
-python3 generate_icon.py
-```
-
-2. 构建 APK：
-```bash
-export JAVA_HOME=/path/to/jdk-17
-./gradlew assembleDebug
-# 输出: app/build/outputs/apk/debug/app-debug.apk
-```
+- Android 7.0（API 24）及以上，已测试兼容 Android 16
 
 ## 使用说明
 
@@ -58,35 +37,36 @@ export JAVA_HOME=/path/to/jdk-17
 2. 点击「上传 GIF 表情包」，从相册选择一个 GIF
 3. 等待解析完成（提示"已提取 N 帧"）
 4. 点击「启动桌宠」，授权悬浮窗权限
-5. 桌宠出现在屏幕上，享受互动！
+5. 桌宠出现在屏幕上
 
-### 操作说明
-- 短按：播放下一个 GIF
-- 长按：打开表情菜单（切换/删除 GIF、关闭桌宠）
-- 拖动：按住移动位置
+**操作：** 短按切换GIF · 长按打开菜单 · 拖动移动位置
+
+## 构建方法
+
+环境：JDK 17 + Android SDK (platform 34) + Gradle 8.2
+
+```bash
+pip install Pillow && python3 generate_icon.py
+gradle assembleDebug
+```
 
 ## 技术要点
 
-- 悬浮窗：WindowManager + TYPE_APPLICATION_OVERLAY（Android 8+）/ TYPE_PHONE（Android 7）
+- 悬浮窗：WindowManager + TYPE_APPLICATION_OVERLAY
 - 前台服务：specialUse 类型，兼容 Android 14+
-- GIF 解析：android.graphics.Movie 逐帧提取，均匀采样到15帧
-- 内存优化：按需加载帧（只加载当前播放的 GIF），Bitmap 及时回收
-- 广播通信：主界面与 Service 通过本地广播同步大小、气泡、素材刷新
+- GIF 解析：android.graphics.Movie 逐帧提取，均匀采样15帧
+- 内存优化：按需加载帧，Bitmap 及时回收
+- 广播通信：主界面与 Service 本地广播同步
 
 ## 项目结构
 
 ```
-app/src/main/
-├── java/com/doubao/pet/littlewhale/
-│   ├── MainActivity.kt          # 主界面：上传GIF、启动/关闭、大小调节、气泡文案
-│   ├── PetFloatingService.kt    # 悬浮窗服务：动画播放、触摸交互、表情菜单
-│   └── GifUtils.kt              # GIF解析工具：拆帧、加载、删除
-├── res/
-│   ├── layout/                   # 布局文件
-│   ├── drawable/                 # 形状资源
-│   └── values/                   # 颜色、字符串、主题
-└── AndroidManifest.xml
-generate_icon.py                  # 图标生成脚本（运行后生成mipmap图标）
+app/src/main/java/com/doubao/pet/littlewhale/
+├── MainActivity.kt          # 主界面
+├── PetFloatingService.kt    # 悬浮窗服务
+└── GifUtils.kt              # GIF解析工具
+generate_icon.py             # 图标生成脚本
+.github/workflows/build.yml  # 自动发布APK
 ```
 
 ## 开源协议
