@@ -205,7 +205,8 @@ class PetFloatingService : Service() {
         val menuOverlayType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
         else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
-        menuView = LayoutInflater.from(this).inflate(R.layout.pet_menu, null)
+        val themedContext = android.view.ContextThemeWrapper(this, R.style.Theme_LittleWhalePet)
+        menuView = LayoutInflater.from(themedContext).inflate(R.layout.pet_menu, null)
         val menuParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
             menuOverlayType,
