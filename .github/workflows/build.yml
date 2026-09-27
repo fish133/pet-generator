@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/oQgnlufOSI" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/NShdHakqJu" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -49,6 +49,10 @@ jobs:
             - 自定义大小 80~400dp
             - 自定义气泡文案，10~40秒随机弹出
             - 自由拖动位置
+
+            ### v2.0.9 修复
+            - 修复长按菜单直接崩溃：Service 未应用 MaterialComponents 主题，导致 ?attr/selectableItemBackground 无法解析
+            - 使用 ContextThemeWrapper 包裹后 inflate 菜单布局
 
             ### v2.0.8 修复
             - 修复长按菜单不灵敏：改为按住350ms自动弹出，无需抬手
