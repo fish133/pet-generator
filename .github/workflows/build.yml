@@ -3,8 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
 
 jobs:
   build:
@@ -29,34 +27,18 @@ jobs:
           chmod +x gradlew 2>/dev/null || true
           ./gradlew assembleDebug --no-daemon
 
-      - name: Prepare APK
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF_NAME#v}
-            APK_NAME="pet-generator-v${VERSION}.apk"
-            RELEASE_NAME="桌宠生成器 v${VERSION}"
-            TAG_NAME="$GITHUB_REF_NAME"
-            PRERELEASE="false"
-          else
-            APK_NAME="pet-generator-latest.apk"
-            RELEASE_NAME="桌宠生成器 (最新构建)"
-            TAG_NAME="latest"
-            PRERELEASE="true"
-          fi
-          cp app/build/outputs/apk/debug/app-debug.apk "$APK_NAME"
-          echo "APK_NAME=$APK_NAME" >> $GITHUB_ENV
-          echo "RELEASE_NAME=$RELEASE_NAME" >> $GITHUB_ENV
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          echo "PRERELEASE=$PRERELEASE" >> $GITHUB_ENV
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk pet-generator-latest.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          name: ${{ env.RELEASE_NAME }}
-          prerelease: ${{ env.PRERELEASE }}
+          tag_name: latest
+          name: 桌宠生成器 (最新构建)
+          prerelease: true
+          make_latest: true
           body: |
-            ## ${{ env.RELEASE_NAME }}
+            ## 桌宠生成器 (最新构建)
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
@@ -70,7 +52,6 @@ jobs:
             - 自定义大小 80~400dp
             - 自定义气泡文案，10~40秒随机弹出
             - 自由拖动位置
-          files: |
-            ${{ env.APK_NAME }}
+          files: pet-generator-latest.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
