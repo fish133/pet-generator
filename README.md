@@ -6,7 +6,14 @@
 
 ## 下载
 
-[v2.0.6 安卓 APK（5.6MB）](https://aka.doubaocdn.com/s/sHJEt4VMwS) — 直接下载安装即可使用
+[v2.0.7 安卓 APK（5.6MB）](https://aka.doubaocdn.com/s/YaXVOvfBnu) — 直接下载安装即可使用
+
+**v2.0.7 修复内容：**
+- 修复点击切换 GIF 播放完毕后访问已回收位图导致的崩溃
+- 修复 GIF 解析时 inputStream 未安全关闭的资源泄漏
+- 修复帧缩放时临时 Bitmap 未回收的内存泄漏
+- 增加 GIF 尺寸为 0 时的保护，避免崩溃
+- 修复占位图标 Bitmap 未回收的内存泄漏
 
 ## 功能特性
 
