@@ -17,15 +17,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.2'
+
       - name: Generate app icons
         run: |
           pip install Pillow
           python3 generate_icon.py
 
       - name: Build Debug APK
-        run: |
-          chmod +x gradlew 2>/dev/null || true
-          ./gradlew assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon
 
       - name: Rename APK
         run: cp app/build/outputs/apk/debug/app-debug.apk pet-generator-latest.apk
