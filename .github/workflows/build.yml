@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/YaXVOvfBnu" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/oQgnlufOSI" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -49,6 +49,11 @@ jobs:
             - 自定义大小 80~400dp
             - 自定义气泡文案，10~40秒随机弹出
             - 自由拖动位置
+
+            ### v2.0.8 修复
+            - 修复长按菜单不灵敏：改为按住350ms自动弹出，无需抬手
+            - 移动判定阈值从10px放宽到25px，减少误判为拖动
+            - 增加ACTION_CANCEL处理，正确取消长按计时
 
             ### v2.0.7 修复
             - 修复点击切换GIF播放完毕后访问已回收位图导致的崩溃
