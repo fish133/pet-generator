@@ -7,20 +7,24 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      JAVA_HOME: ${{ steps.setup-java.outputs.path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
+        id: setup-java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.2'
+      - name: Download Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.2-bin.zip
+          unzip -q gradle-8.2-bin.zip
+          echo "$PWD/gradle-8.2/bin" >> $GITHUB_PATH
 
       - name: Generate app icons
         run: |
