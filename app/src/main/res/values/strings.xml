@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">桌宠生成器</string>
+    <string name="start_pet">启动桌宠</string>
+    <string name="stop_pet">关闭桌宠</string>
+    <string name="need_overlay_permission">需要悬浮窗权限</string>
+    <string name="request_overlay">去授权</string>
+    <string name="pet_running">桌宠正在桌面上陪你～</string>
+    <string name="pet_stopped">桌宠已关闭</string>
+    <string name="channel_name">桌宠服务</string>
+    <string name="channel_desc">桌宠悬浮窗服务</string>
+</resources>
