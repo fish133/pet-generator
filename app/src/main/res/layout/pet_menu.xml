@@ -1,22 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/menuRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#80000000">
-    <LinearLayout android:id="@+id/menuPanel" android:layout_width="280dp" android:layout_height="wrap_content"
-        android:layout_gravity="center" android:orientation="vertical" android:background="@drawable/menu_panel_bg" android:padding="0dp">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal"
-            android:gravity="center_vertical" android:paddingHorizontal="16dp">
-            <TextView android:id="@+id/tvMenuTitle" android:layout_width="0dp" android:layout_height="wrap_content"
-                android:layout_weight="1" android:text="选择表情" android:textSize="16sp" android:textStyle="bold" android:textColor="#333333" />
-            <View android:id="@+id/btnMenuClose" android:layout_width="32dp" android:layout_height="32dp"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+    android:id="@+id/menuRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000">
+
+    <LinearLayout
+        android:id="@+id/menuPanel"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/menu_panel_bg"
+        android:padding="0dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp">
+
+            <TextView
+                android:id="@+id/tvMenuTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="选择表情"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/btnMenuClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:text="✕"
+                android:textSize="18sp"
+                android:textColor="#999999"
+                android:gravity="center"
+                android:background="@android:color/transparent" />
+
         </LinearLayout>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" />
-        <ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:maxHeight="360dp">
-            <LinearLayout android:id="@+id/menuContent" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxHeight="360dp">
+
+            <LinearLayout
+                android:id="@+id/menuContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
         </ScrollView>
-        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" />
-        <Button android:id="@+id/btnExitPet" android:layout_width="match_parent" android:layout_height="48dp"
-            android:text="关闭桌宠" android:textSize="15sp" android:textColor="#E53935"
-            android:background="?attr/selectableItemBackground" android:stateListAnimator="@null" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE" />
+
+        <TextView
+            android:id="@+id/btnExitPet"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="关闭桌宠"
+            android:textSize="15sp"
+            android:textColor="#E53935"
+            android:gravity="center"
+            android:background="@android:color/transparent" />
+
     </LinearLayout>
+
 </FrameLayout>
