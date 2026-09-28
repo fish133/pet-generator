@@ -21,7 +21,6 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -216,9 +215,9 @@ class PetFloatingService : Service() {
         menuParams.gravity = Gravity.CENTER
         val menuRoot = menuView!!.findViewById<View>(R.id.menuRoot)
         val tvTitle = menuView!!.findViewById<TextView>(R.id.tvMenuTitle)
-        val btnClose = menuView!!.findViewById<View>(R.id.btnMenuClose)
+        val btnClose = menuView!!.findViewById<TextView>(R.id.btnMenuClose)
         val scrollContent = menuView!!.findViewById<LinearLayout>(R.id.menuContent)
-        val btnExit = menuView!!.findViewById<Button>(R.id.btnExitPet)
+        val btnExit = menuView!!.findViewById<TextView>(R.id.btnExitPet)
         tvTitle.text = "选择 GIF（${gifNames.size}个）"
         menuRoot.setOnClickListener { hideEmojiMenu() }
         btnClose.setOnClickListener { hideEmojiMenu() }
