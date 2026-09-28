@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/NShdHakqJu" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/V8KRqQqKxV" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -39,30 +39,19 @@ jobs:
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
-            ### 下载
-            直接下载下方 Assets 中的 APK 安装即可。
-
-            ### 功能
-            - 上传 GIF 即桌宠（自动拆帧最多15帧）
-            - 短按切换下一个 GIF
-            - 长按打开表情菜单（切换/删除/关闭）
-            - 自定义大小 80~400dp
-            - 自定义气泡文案，10~40秒随机弹出
-            - 自由拖动位置
+            ### v2.1.0 修复
+            - 彻底移除菜单布局中的 ?attr/selectableItemBackground 主题属性，改用纯色背景
+            - 关闭按钮和退出按钮改用 TextView，避免 Service Context 主题解析崩溃
+            - ContextThemeWrapper 包裹菜单 inflate
 
             ### v2.0.9 修复
-            - 修复长按菜单直接崩溃：Service 未应用 MaterialComponents 主题，导致 ?attr/selectableItemBackground 无法解析
+            - 修复长按菜单直接崩溃：Service 未应用 MaterialComponents 主题
             - 使用 ContextThemeWrapper 包裹后 inflate 菜单布局
 
             ### v2.0.8 修复
-            - 修复长按菜单不灵敏：改为按住350ms自动弹出，无需抬手
-            - 移动判定阈值从10px放宽到25px，减少误判为拖动
-            - 增加ACTION_CANCEL处理，正确取消长按计时
+            - 长按改为按住350ms自动弹出
+            - 移动阈值从10px放宽到25px
 
             ### v2.0.7 修复
-            - 修复点击切换GIF播放完毕后访问已回收位图导致的崩溃
-            - 修复GIF解析时inputStream未安全关闭的资源泄漏
-            - 修复帧缩放时临时Bitmap未回收的内存泄漏
-            - 增加GIF尺寸为0时的保护
-            - 修复占位图标Bitmap未回收
+            - 修复多处位图回收崩溃和内存泄漏
           files: pet-generator-latest.apk
