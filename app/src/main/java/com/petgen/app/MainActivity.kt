@@ -113,12 +113,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGifUpload(uri: Uri) {
-        Toast.makeText(this, "正在解析 GIF...", Toast.LENGTH_SHORT).show()
+        val maxFrames = when (binding.rgFrameCount.checkedRadioButtonId) {
+            binding.rb12.id -> 12
+            binding.rb30.id -> 30
+            else -> 15
+        }
+        Toast.makeText(this, "正在解析 GIF（${maxFrames}帧）...", Toast.LENGTH_SHORT).show()
         Thread {
             try {
                 val gifName = "gif_${System.currentTimeMillis()}"
                 val outputDir = File(GifUtils.getGifRootDir(this), gifName)
-                val frames = GifUtils.extractGifFrames(this, uri, outputDir, maxFrames = 15, targetSize = 512)
+                val frames = GifUtils.extractGifFrames(this, uri, outputDir, maxFrames = maxFrames, targetSize = 512)
 
                 runOnUiThread {
                     if (frames.isNotEmpty()) {
