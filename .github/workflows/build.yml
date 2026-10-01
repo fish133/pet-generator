@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/cQTCdyFkPg" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/Deis7iLJHt" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -39,15 +39,15 @@ jobs:
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
+            ### v2.2.2
+            - 修复 loadFramesForGif 多线程竞争导致的 Bitmap 回收崩溃
+            - getCurrentIdleFrames 不再在主线程执行文件 I/O
+            - MainActivity GIF 数量统计移到后台线程
+
             ### v2.2.1
             - 修复主线程文件 I/O 导致的 UI 卡顿
             - GIF 加载/切换/删除全部移到后台线程
-            - 清理未使用变量
 
             ### v2.2.0
             - 上传 GIF 时可选择帧数：12帧 / 15帧 / 30帧
-
-            ### v2.1.0
-            - 包名重构：com.petgen.app
-            - 修复长按菜单崩溃
           files: pet-generator-latest.apk
