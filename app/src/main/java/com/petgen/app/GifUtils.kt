@@ -90,7 +90,6 @@ object GifUtils {
         val c2 = Canvas(bmp2)
 
         var frameCount = 0
-        var lastChanged = -1
         var t = 0
         val step = 30
 
@@ -101,7 +100,6 @@ object GifUtils {
 
             if (t == 0 || !bitmapsEqual(bmp1, bmp2)) {
                 frameCount++
-                lastChanged = t
                 c1.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR)
                 c1.drawBitmap(bmp2, 0f, 0f, null)
             }
