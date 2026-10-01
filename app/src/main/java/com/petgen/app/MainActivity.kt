@@ -147,8 +147,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateGifCount() {
-        val count = GifUtils.getGifList(this).size
-        binding.tvGifCount.text = "已上传 $count 个 GIF"
+        Thread {
+            val count = GifUtils.getGifList(this).size
+            runOnUiThread {
+                binding.tvGifCount.text = "已上传 $count 个 GIF"
+            }
+        }.start()
     }
 
     override fun onResume() {
