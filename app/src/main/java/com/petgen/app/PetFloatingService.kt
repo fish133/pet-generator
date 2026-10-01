@@ -107,10 +107,14 @@ class PetFloatingService : Service() {
     private val refreshGifReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.petgen.app.REFRESH_GIFS") {
-                loadGifList()
-                loadFramesForGif(currentGifIndex)
-                currentFrame = 0
-                Toast.makeText(this@PetFloatingService, "素材已刷新", Toast.LENGTH_SHORT).show()
+                Thread {
+                    loadGifList()
+                    loadFramesForGif(currentGifIndex)
+                    handler.post {
+                        currentFrame = 0
+                        Toast.makeText(this@PetFloatingService, "素材已刷新", Toast.LENGTH_SHORT).show()
+                    }
+                }.start()
             }
         }
     }
@@ -239,13 +243,17 @@ class PetFloatingService : Service() {
             return
         }
         val nextIndex = (currentGifIndex + 1) % gifNames.size
-        val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
-        if (frames.isNotEmpty()) {
-            customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-            customFrames = frames
-            isPlayingCustom = true
-            currentFrame = 0
-        }
+        Thread {
+            val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
+            handler.post {
+                if (frames.isNotEmpty()) {
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames = frames
+                    isPlayingCustom = true
+                    currentFrame = 0
+                }
+            }
+        }.start()
     }
 
     private fun showEmojiMenu() {
@@ -296,20 +304,32 @@ class PetFloatingService : Service() {
                     isPlayingCustom = false
                     customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = emptyList()
-                    loadFramesForGif(index)
-                    currentFrame = 0
-                    hideEmojiMenu()
-                    Toast.makeText(this, "已切换到 GIF ${index + 1}", Toast.LENGTH_SHORT).show()
+                    Thread {
+                        loadFramesForGif(index)
+                        handler.post {
+                            currentFrame = 0
+                            hideEmojiMenu()
+                            Toast.makeText(this@PetFloatingService, "已切换到 GIF ${index + 1}", Toast.LENGTH_SHORT).show()
+                        }
+                    }.start()
                 }
                 item.setOnLongClickListener {
                     if (gifNames.size > 1) {
-                        GifUtils.deleteGif(this, name)
-                        loadGifList()
-                        if (currentGifIndex >= gifNames.size) currentGifIndex = 0
-                        loadFramesForGif(currentGifIndex)
-                        currentFrame = 0
-                        hideEmojiMenu()
-                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
+                        Thread {
+                            GifUtils.deleteGif(this, name)
+                            handler.post {
+                                loadGifList()
+                                if (currentGifIndex >= gifNames.size) currentGifIndex = 0
+                                Thread {
+                                    loadFramesForGif(currentGifIndex)
+                                    handler.post {
+                                        currentFrame = 0
+                                        hideEmojiMenu()
+                                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
+                                    }
+                                }.start()
+                            }
+                        }.start()
                     } else {
                         Toast.makeText(this, "至少保留一个 GIF", Toast.LENGTH_SHORT).show()
                     }
@@ -380,7 +400,6 @@ class PetFloatingService : Service() {
         petSize = prefs.getInt(MainActivity.KEY_SIZE, MainActivity.DEFAULT_SIZE)
         loadBubbleTexts()
         loadGifList()
-        loadFramesForGif(currentGifIndex)
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         petView = LayoutInflater.from(this).inflate(R.layout.pet_floating, null)
@@ -429,6 +448,10 @@ class PetFloatingService : Service() {
 
         handler.post(animationRunnable)
         handler.postDelayed(bubbleRunnable, 5000)
+
+        Thread {
+            loadFramesForGif(currentGifIndex)
+        }.start()
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -488,9 +511,9 @@ class PetFloatingService : Service() {
         try { unregisterReceiver(refreshGifReceiver) } catch (_: Exception) {}
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}
         placeholderBitmap = null
     }
 
