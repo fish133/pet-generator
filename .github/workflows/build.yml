@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/V9ay7WVXsE" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/VVtmNctsjU" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -39,19 +39,11 @@ jobs:
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
+            ### v2.2.0
+            - 上传 GIF 时可选择帧数：12帧 / 15帧 / 30帧
+            - 12帧更流畅省内存，30帧更细腻
+
             ### v2.1.0
-            - 包名重构：com.doubao.pet.littlewhale → com.petgen.app
-            - 主题名改为 Theme.PetGen
-            - 广播 action 统一为 com.petgen.app.*
-            - 彻底移除菜单布局中的 ?attr/selectableItemBackground 主题属性
-            - 关闭按钮和退出按钮改用 TextView，避免 Service Context 主题解析崩溃
-
-            ### v2.0.9
-            - 修复长按菜单直接崩溃
-
-            ### v2.0.8
-            - 长按改为按住350ms自动弹出，移动阈值放宽到25px
-
-            ### v2.0.7
-            - 修复多处位图回收崩溃和内存泄漏
+            - 包名重构：com.petgen.app
+            - 修复长按菜单崩溃
           files: pet-generator-latest.apk
