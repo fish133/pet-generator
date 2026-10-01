@@ -72,6 +72,7 @@ class PetFloatingService : Service() {
         if (currentGifIndex >= gifNames.size) currentGifIndex = 0
     }
 
+    @Synchronized
     private fun loadFramesForGif(index: Int): List<Bitmap> {
         currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         if (index >= 0 && index < gifNames.size) {
@@ -85,7 +86,7 @@ class PetFloatingService : Service() {
     private fun getCurrentIdleFrames(): List<Bitmap> {
         if (currentFrames.isNotEmpty()) return currentFrames
         if (gifNames.isNotEmpty() && currentGifIndex < gifNames.size) {
-            return loadFramesForGif(currentGifIndex)
+            Thread { loadFramesForGif(currentGifIndex) }.start()
         }
         return emptyList()
     }
@@ -511,9 +512,9 @@ class PetFloatingService : Service() {
         try { unregisterReceiver(refreshGifReceiver) } catch (_: Exception) {}
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
         placeholderBitmap = null
     }
 
