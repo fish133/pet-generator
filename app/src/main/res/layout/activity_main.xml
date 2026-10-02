@@ -129,8 +129,8 @@
         android:id="@+id/sbSize"
         android:layout_width="240dp"
         android:layout_height="wrap_content"
-        android:max="320"
-        android:progress="140"
+        android:max="720"
+        android:progress="200"
         android:layout_marginBottom="24dp" />
 
     <TextView
@@ -170,7 +170,41 @@
         android:text="确定"
         android:textSize="16sp"
         app:cornerRadius="24dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="24dp" />
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/swClickSound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="连续点击音效"
+        android:textSize="14sp"
+        android:textColor="@color/text"
+        android:layout_marginBottom="8dp" />
+
+    <RadioGroup
+        android:id="@+id/rgSoundChoice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="24dp"
+        android:padding="4dp">
+
+        <RadioButton
+            android:id="@+id/rbDuck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="鸭子音效"
+            android:textSize="13sp"
+            android:checked="true"
+            android:layout_marginEnd="20dp" />
+
+        <RadioButton
+            android:id="@+id/rbBingbing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="冰冰冰音效"
+            android:textSize="13sp" />
+    </RadioGroup>
 
     </LinearLayout>
 </ScrollView>
