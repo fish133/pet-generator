@@ -23,7 +23,9 @@ class MainActivity : AppCompatActivity() {
         const val PREFS_NAME = "pet_prefs"
         const val KEY_SIZE = "pet_size"
         const val KEY_BUBBLE_TEXTS = "bubble_texts"
-        const val DEFAULT_SIZE = 220
+        const val KEY_CLICK_SOUND = "click_sound_enabled"
+        const val KEY_SOUND_TYPE = "sound_type"
+        const val DEFAULT_SIZE = 280
         private const val REQUEST_PICK_GIF = 1001
     }
 
@@ -61,6 +63,23 @@ class MainActivity : AppCompatActivity() {
             }
             Toast.makeText(this, "气泡文案已更新", Toast.LENGTH_SHORT).show()
         }
+
+        // 音效设置
+        binding.swClickSound.isChecked = prefs.getBoolean(KEY_CLICK_SOUND, false)
+        val savedSoundType = prefs.getString(KEY_SOUND_TYPE, "duck")
+        binding.rgSoundChoice.check(if (savedSoundType == "bingbing") binding.rbBingbing.id else binding.rbDuck.id)
+
+        val saveSoundPref = {
+            prefs.edit()
+                .putBoolean(KEY_CLICK_SOUND, binding.swClickSound.isChecked)
+                .putString(KEY_SOUND_TYPE, if (binding.rgSoundChoice.checkedRadioButtonId == binding.rbBingbing.id) "bingbing" else "duck")
+                .apply()
+            if (isRunning) {
+                sendBroadcast(Intent("com.petgen.app.UPDATE_SOUND"))
+            }
+        }
+        binding.swClickSound.setOnCheckedChangeListener { _, _ -> saveSoundPref() }
+        binding.rgSoundChoice.setOnCheckedChangeListener { _, _ -> saveSoundPref() }
 
         binding.btnUploadGif.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
