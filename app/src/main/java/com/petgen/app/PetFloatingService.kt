@@ -26,6 +26,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import android.media.AudioManager
+import android.media.SoundPool
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 
@@ -44,8 +46,31 @@ class PetFloatingService : Service() {
     private var layoutParams: WindowManager.LayoutParams? = null
     private var menuView: View? = null
     private lateinit var prefs: SharedPreferences
-    private var petSize = 180
+    private var petSize = 280
 
+    // 音效
+    private var soundPool: SoundPool? = null
+    private var duckSoundId = 0
+    private var bingbingSoundId = 0
+    private var clickSoundEnabled = false
+    private var soundType = "duck"
+
+    private fun loadSoundSettings() {
+        try {
+            if (!::prefs.isInitialized) return
+            clickSoundEnabled = prefs.getBoolean(MainActivity.KEY_CLICK_SOUND, false)
+            soundType = prefs.getString(MainActivity.KEY_SOUND_TYPE, "duck") ?: "duck"
+        } catch (_: Exception) {}
+    }
+
+    private fun playClickSound() {
+        if (!clickSoundEnabled) return
+        val sp = soundPool ?: return
+        val soundId = if (soundType == "bingbing") bingbingSoundId else duckSoundId
+        if (soundId != 0) sp.play(soundId, 1f, 1f, 1, 0, 1f)
+    }
+
+    // 默认气泡文案
     private val defaultBubbleTexts = listOf("你好呀", "今天也要加油哦", "摸摸~")
     private var bubbleTexts: List<String> = defaultBubbleTexts
 
@@ -61,6 +86,7 @@ class PetFloatingService : Service() {
         } catch (e: Exception) { bubbleTexts = defaultBubbleTexts }
     }
 
+    // ===== GIF 素材管理 =====
     private var gifNames: List<String> = emptyList()
     private var currentFrames: List<Bitmap> = emptyList()
     private var currentGifIndex = 0
@@ -91,6 +117,7 @@ class PetFloatingService : Service() {
         return emptyList()
     }
 
+    // ===== 广播接收器 =====
     private val sizeReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.petgen.app.UPDATE_SIZE") {
@@ -102,6 +129,12 @@ class PetFloatingService : Service() {
     private val bubbleReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.petgen.app.UPDATE_BUBBLE") loadBubbleTexts()
+        }
+    }
+
+    private val soundReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.petgen.app.UPDATE_SOUND") loadSoundSettings()
         }
     }
 
@@ -120,6 +153,7 @@ class PetFloatingService : Service() {
         }
     }
 
+    // ===== 动画播放 =====
     private val handler = Handler(Looper.getMainLooper())
     private var currentFrame = 0
 
@@ -161,6 +195,7 @@ class PetFloatingService : Service() {
         }
     }
 
+    // ===== 气泡 =====
     private val bubbleRunnable = object : Runnable {
         override fun run() {
             try {
@@ -179,6 +214,7 @@ class PetFloatingService : Service() {
         handler.postDelayed({ tvBubble.visibility = View.GONE }, 3000)
     }
 
+    // ===== 触摸/拖动 =====
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
@@ -227,6 +263,7 @@ class PetFloatingService : Service() {
                 val duration = System.currentTimeMillis() - downTime
                 if (!isDragging && !longPressTriggered && duration < 350) {
                     playNextGif()
+                    playClickSound()
                 }
                 true
             }
@@ -257,6 +294,7 @@ class PetFloatingService : Service() {
         }.start()
     }
 
+    // ===== 表情菜单 =====
     private fun showEmojiMenu() {
         if (menuView != null) return
 
@@ -303,7 +341,7 @@ class PetFloatingService : Service() {
                 item.setOnClickListener {
                     currentGifIndex = index
                     isPlayingCustom = false
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
                     customFrames = emptyList()
                     Thread {
                         loadFramesForGif(index)
@@ -394,13 +432,26 @@ class PetFloatingService : Service() {
         try { windowManager.updateViewLayout(petView, layoutParams) } catch (_: Exception) {}
     }
 
+    // ===== 生命周期 =====
     override fun onCreate() {
         super.onCreate()
         isRunning = true
         prefs = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE)
         petSize = prefs.getInt(MainActivity.KEY_SIZE, MainActivity.DEFAULT_SIZE)
         loadBubbleTexts()
+        loadSoundSettings()
         loadGifList()
+
+        soundPool = SoundPool.Builder()
+            .setMaxStreams(3)
+            .setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_GAME)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            ).build()
+        duckSoundId = soundPool?.load(this, R.raw.duck, 1) ?: 0
+        bingbingSoundId = soundPool?.load(this, R.raw.bingbing, 1) ?: 0
 
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         petView = LayoutInflater.from(this).inflate(R.layout.pet_floating, null)
@@ -440,10 +491,12 @@ class PetFloatingService : Service() {
                 registerReceiver(sizeReceiver, IntentFilter("com.petgen.app.UPDATE_SIZE"), Context.RECEIVER_NOT_EXPORTED)
                 registerReceiver(bubbleReceiver, IntentFilter("com.petgen.app.UPDATE_BUBBLE"), Context.RECEIVER_NOT_EXPORTED)
                 registerReceiver(refreshGifReceiver, IntentFilter("com.petgen.app.REFRESH_GIFS"), Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(soundReceiver, IntentFilter("com.petgen.app.UPDATE_SOUND"), Context.RECEIVER_NOT_EXPORTED)
             } else {
                 registerReceiver(sizeReceiver, IntentFilter("com.petgen.app.UPDATE_SIZE"))
                 registerReceiver(bubbleReceiver, IntentFilter("com.petgen.app.UPDATE_BUBBLE"))
                 registerReceiver(refreshGifReceiver, IntentFilter("com.petgen.app.REFRESH_GIFS"))
+                registerReceiver(soundReceiver, IntentFilter("com.petgen.app.UPDATE_SOUND"))
             }
         } catch (e: Exception) { e.printStackTrace() }
 
@@ -510,11 +563,14 @@ class PetFloatingService : Service() {
         try { unregisterReceiver(sizeReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(bubbleReceiver) } catch (_: Exception) {}
         try { unregisterReceiver(refreshGifReceiver) } catch (_: Exception) {}
+        try { unregisterReceiver(soundReceiver) } catch (_: Exception) {}
+        try { soundPool?.release() } catch (_: Exception) {}
+        soundPool = null
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}
         placeholderBitmap = null
     }
 
