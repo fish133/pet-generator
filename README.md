@@ -6,7 +6,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.0，5.6MB）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.1，5.6MB）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -40,6 +40,10 @@
 **音效：** 在主界面气泡文案下方打开「连续点击音效」开关，选择鸭子或冰冰冰音效即可。
 
 ## 更新历史
+
+### v2.3.1
+- 修复 loadFramesForGif 立即回收旧 Bitmap 导致动画线程黑屏/崩溃
+- 改为延迟 500ms 回收旧帧，等待动画切换到新帧后再释放内存
 
 ### v2.3.0
 - 新增点击音效：鸭子音效 + 冰冰冰音效（二选一）
