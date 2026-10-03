@@ -70,7 +70,7 @@ class PetFloatingService : Service() {
         if (soundId != 0) sp.play(soundId, 1f, 1f, 1, 0, 1f)
     }
 
-    // 默认气泡文案
+    // 默认气泡文案（用户未自定义时使用，留空则不显示）
     private val defaultBubbleTexts = listOf("你好呀", "今天也要加油哦", "摸摸~")
     private var bubbleTexts: List<String> = defaultBubbleTexts
 
@@ -86,7 +86,7 @@ class PetFloatingService : Service() {
         } catch (e: Exception) { bubbleTexts = defaultBubbleTexts }
     }
 
-    // ===== GIF 素材管理 =====
+    // ===== GIF 素材管理（按需加载，避免 OOM）=====
     private var gifNames: List<String> = emptyList()
     private var currentFrames: List<Bitmap> = emptyList()
     private var currentGifIndex = 0
@@ -98,14 +98,19 @@ class PetFloatingService : Service() {
         if (currentGifIndex >= gifNames.size) currentGifIndex = 0
     }
 
+    /** 加载指定 GIF 的帧到 currentFrames（延迟回收旧帧避免动画线程竞争） */
     @Synchronized
     private fun loadFramesForGif(index: Int): List<Bitmap> {
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        if (index >= 0 && index < gifNames.size) {
-            currentFrames = GifUtils.loadGifFrames(this, gifNames[index])
+        val oldFrames = currentFrames
+        currentFrames = if (index >= 0 && index < gifNames.size) {
+            GifUtils.loadGifFrames(this, gifNames[index])
         } else {
-            currentFrames = emptyList()
+            emptyList()
         }
+        // 延迟回收旧帧，等待动画线程切换到新帧后再回收，避免 recycled bitmap 崩溃
+        handler.postDelayed({
+            oldFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        }, 500)
         return currentFrames
     }
 
@@ -341,7 +346,7 @@ class PetFloatingService : Service() {
                 item.setOnClickListener {
                     currentGifIndex = index
                     isPlayingCustom = false
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = emptyList()
                     Thread {
                         loadFramesForGif(index)
@@ -425,6 +430,7 @@ class PetFloatingService : Service() {
         menuView = null
     }
 
+    // ===== 大小 =====
     private fun updatePetSize(size: Int) {
         petSize = size
         layoutParams?.width = size
@@ -568,9 +574,9 @@ class PetFloatingService : Service() {
         soundPool = null
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
         placeholderBitmap = null
     }
 
