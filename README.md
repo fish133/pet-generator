@@ -6,7 +6,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.1，5.6MB）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.2，4.7MB，正式签名）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -41,6 +41,10 @@
 
 ## 更新历史
 
+### v2.3.2
+- 正式签名发布（release keystore），不再是 debug 证书
+- 安装不再提示安全警告
+
 ### v2.3.1
 - 修复 loadFramesForGif 立即回收旧 Bitmap 导致动画线程黑屏/崩溃
 - 改为延迟 500ms 回收旧帧，等待动画切换到新帧后再释放内存
@@ -70,7 +74,7 @@
 
 ```bash
 pip install Pillow && python3 generate_icon.py
-gradle assembleDebug
+gradle assembleRelease
 ```
 
 ## 技术要点
