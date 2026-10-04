@@ -50,4 +50,4 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
 
-// v2.3.3
+// v2.3.3 release
