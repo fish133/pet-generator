@@ -6,7 +6,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.2，4.7MB，正式签名）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.3，4.7MB，正式签名）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -40,6 +40,10 @@
 **音效：** 在主界面气泡文案下方打开「连续点击音效」开关，选择鸭子或冰冰冰音效即可。
 
 ## 更新历史
+
+### v2.3.3
+- 修复大小存档越界导致 SeekBar 启动崩溃
+- 存档尺寸夹取到 80~800dp 合法范围
 
 ### v2.3.2
 - 正式签名发布（release keystore），不再是 debug 证书
