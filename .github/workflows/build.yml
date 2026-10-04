@@ -31,11 +31,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 桌宠生成器 (最新构建)
-          prerelease: true
+          name: 桌宠生成器 v2.3.2
+          prerelease: false
           make_latest: true
           body: |
-            ## 桌宠生成器 (最新构建)
+            ## 桌宠生成器 v2.3.2
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
