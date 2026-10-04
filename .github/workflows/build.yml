@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/irMNfc5ViN" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/BcuAsoEaJo" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -38,6 +38,10 @@ jobs:
             ## 桌宠生成器 (最新构建)
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
+
+            ### v2.3.2
+            - 正式签名发布（不再是 debug 证书）
+            - APK 使用 release keystore 签名，安装不再提示警告
 
             ### v2.3.1
             - 修复 loadFramesForGif 立即回收旧 Bitmap 导致动画线程黑屏/崩溃
