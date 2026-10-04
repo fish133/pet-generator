@@ -11,8 +11,8 @@ android {
         applicationId "com.petgen.app"
         minSdk 24
         targetSdk 34
-        versionCode 36
-        versionName "2.3.2"
+        versionCode 37
+        versionName "2.3.3"
     }
 
     signingConfigs {
@@ -50,4 +50,4 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
 
-// v2.3.2 latest release
+// v2.3.3
