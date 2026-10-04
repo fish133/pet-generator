@@ -6,7 +6,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.3，4.7MB，正式签名）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.4，4.7MB，正式签名）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -40,6 +40,13 @@
 **音效：** 在主界面气泡文案下方打开「连续点击音效」开关，选择鸭子或冰冰冰音效即可。
 
 ## 更新历史
+
+### v2.3.4
+- 安全：广播 NOT_EXPORTED，防止任意 App 操控桌宠
+- 逻辑：GIF 帧数估算加迭代上限，防止超长 GIF 卡死
+- 性能：线程池替代频繁 new Thread
+- 资源：移除 Android 13+ 无效的 READ_EXTERNAL_STORAGE
+- 显示：重写占位图坐标，确保无素材时可见
 
 ### v2.3.3
 - 修复大小存档越界导致 SeekBar 启动崩溃
@@ -88,7 +95,7 @@ gradle assembleRelease
 - GIF 解析：android.graphics.Movie 逐帧提取，均匀采样
 - 音效播放：SoundPool 低延迟，支持连续快速点击
 - 内存优化：按需加载帧，Bitmap 及时回收
-- 广播通信：主界面与 Service 本地广播同步
+- 广播通信：主界面与 Service 本地广播（NOT_EXPORTED）同步
 
 ## 项目结构
 

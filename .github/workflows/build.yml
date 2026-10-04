@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/C0o6UVUX82" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/1Ty56lryZB" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -31,17 +31,24 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 桌宠生成器 v2.3.3
+          name: 桌宠生成器 v2.3.4
           prerelease: false
           make_latest: true
           body: |
-            ## 桌宠生成器 v2.3.3
+            ## 桌宠生成器 v2.3.4
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
 
+            ### v2.3.4
+            - 安全：广播接收器改为 NOT_EXPORTED，防止任意 App 伪造广播操控桌宠
+            - 逻辑：GIF 帧数估算增加迭代上限，防止超长 GIF 卡死
+            - 性能：统一使用线程池替代频繁 new Thread
+            - 资源：移除 Android 13+ 无效的 READ_EXTERNAL_STORAGE 权限
+            - 显示：重写占位图绘制坐标，确保无素材时可见
+
             ### v2.3.3
             - 修复大小存档越界导致 SeekBar 启动崩溃
-            - 存档尺寸夹取到 80~800dp 合法范围，防止 setProgress 抛异常
+            - 存档尺寸夹取到 80~800dp 合法范围
 
             ### v2.3.2
             - 正式签名发布（不再是 debug 证书）
@@ -55,12 +62,10 @@ jobs:
             - 新增点击音效：鸭子音效 / 冰冰冰音效（可二选一）
             - 音效开关和选择在「自定义气泡文案」下方
             - 从参考视频截取真实音效素材，非 AI 生成
-            - SoundPool 播放，Service 销毁时自动释放
 
             ### v2.2.2
             - 修复 loadFramesForGif 多线程竞争导致的 Bitmap 回收崩溃
             - getCurrentIdleFrames 不再在主线程执行文件 I/O
-            - MainActivity GIF 数量统计移到后台线程
 
             ### v2.2.1
             - 修复主线程文件 I/O 导致的 UI 卡顿
