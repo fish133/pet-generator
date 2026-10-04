@@ -43,8 +43,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         val savedSize = prefs.getInt(KEY_SIZE, DEFAULT_SIZE)
-        binding.sbSize.progress = savedSize - 80
-        binding.tvSizeValue.text = "${savedSize}dp"
+        // 防止存档越界（<80 或 >800）导致 setProgress 抛异常崩溃，夹取到合法范围
+        val clampedSize = savedSize.coerceIn(80, 800)
+        if (clampedSize != savedSize) {
+            prefs.edit().putInt(KEY_SIZE, clampedSize).apply()
+        }
+        binding.sbSize.progress = clampedSize - 80
+        binding.tvSizeValue.text = "${clampedSize}dp"
 
         val savedBubble = prefs.getString(KEY_BUBBLE_TEXTS, "")
         if (!savedBubble.isNullOrEmpty()) {
@@ -81,6 +86,7 @@ class MainActivity : AppCompatActivity() {
         binding.swClickSound.setOnCheckedChangeListener { _, _ -> saveSoundPref() }
         binding.rgSoundChoice.setOnCheckedChangeListener { _, _ -> saveSoundPref() }
 
+        // 上传 GIF
         binding.btnUploadGif.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 type = "image/gif"
