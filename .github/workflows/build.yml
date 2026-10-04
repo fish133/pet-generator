@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/BcuAsoEaJo" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/C0o6UVUX82" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -31,13 +31,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 桌宠生成器 v2.3.2
+          name: 桌宠生成器 v2.3.3
           prerelease: false
           make_latest: true
           body: |
-            ## 桌宠生成器 v2.3.2
+            ## 桌宠生成器 v2.3.3
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
+
+            ### v2.3.3
+            - 修复大小存档越界导致 SeekBar 启动崩溃
+            - 存档尺寸夹取到 80~800dp 合法范围，防止 setProgress 抛异常
 
             ### v2.3.2
             - 正式签名发布（不再是 debug 证书）
