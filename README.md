@@ -10,6 +10,12 @@
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
+## 界面展示
+
+| 主界面 | 设置界面 |
+| --- | --- |
+| ![主界面](screenshot-main.png) | ![设置界面](screenshot-settings.png) |
+
 ## 功能特性
 
 - **上传 GIF 即桌宠**：从相册选择任意 GIF，自动拆帧
@@ -108,6 +114,8 @@ app/src/main/res/raw/
 ├── duck.mp3                 # 鸭子音效
 └── bingbing.mp3             # 冰冰冰音效
 generate_icon.py             # 图标生成脚本
+screenshot-main.png          # 主界面截图
+screenshot-settings.png      # 设置界面截图
 .github/workflows/build.yml  # 自动发布APK
 ```
 
