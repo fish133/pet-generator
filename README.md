@@ -8,7 +8,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.3.4，4.7MB，正式签名）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.4.0，4.7MB，正式签名）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -23,6 +23,7 @@
 - **上传 GIF 即桌宠**：从相册选择任意 GIF，自动拆帧
 - **帧数可选**：上传时可选 12帧 / 15帧 / 30帧，平衡流畅度与细腻度
 - **短按切换 GIF**：点击桌宠切换到下一个 GIF 播放
+- **随机表情**：每 10~40 秒随机播放一个 GIF 表情，播完自动回到待机
 - **点击音效**：可选鸭子音效或冰冰冰音效，开启后短按桌宠发声
 - **长按菜单**：打开表情菜单，切换待机 GIF、长按删除、关闭桌宠
 - **自定义大小**：滑块调节 80~800dp
@@ -48,6 +49,10 @@
 **音效：** 在主界面气泡文案下方打开「连续点击音效」开关，选择鸭子或冰冰冰音效即可。
 
 ## 更新历史
+
+### v2.4.0
+- 新增随机表情：每 10~40 秒随机播放一个 GIF 表情，播完自动回到待机
+- 与「自言自语气泡」同节奏，桌宠更生动
 
 ### v2.3.4
 - 安全：广播 NOT_EXPORTED，防止任意 App 操控桌宠
