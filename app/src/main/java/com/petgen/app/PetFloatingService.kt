@@ -21,15 +21,14 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.TextView
-import android.media.AudioManager
 import android.media.SoundPool
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import java.util.concurrent.Executors
 
 class PetFloatingService : Service() {
 
@@ -37,6 +36,8 @@ class PetFloatingService : Service() {
         var isRunning = false
         private const val CHANNEL_ID = "pet_service_channel"
         private const val NOTIFICATION_ID = 1001
+        // 统一后台线程池，避免频繁 new Thread 的开销
+        private val ioExecutor = Executors.newFixedThreadPool(2)
     }
 
     private lateinit var windowManager: WindowManager
@@ -87,11 +88,11 @@ class PetFloatingService : Service() {
     }
 
     // ===== GIF 素材管理（按需加载，避免 OOM）=====
-    private var gifNames: List<String> = emptyList()
-    private var currentFrames: List<Bitmap> = emptyList()
-    private var currentGifIndex = 0
-    private var isPlayingCustom = false
-    private var customFrames: List<Bitmap> = emptyList()
+    private var gifNames: List<String> = emptyList()       // 所有 GIF 名称
+    private var currentFrames: List<Bitmap> = emptyList()   // 当前正在播放的帧
+    private var currentGifIndex = 0                          // 当前 idle 用的 GIF 索引
+    private var isPlayingCustom = false                       // 是否正在播放点击触发的 GIF
+    private var customFrames: List<Bitmap> = emptyList()     // 点击触发播放的帧
 
     private fun loadGifList() {
         gifNames = GifUtils.getGifList(this)
@@ -117,7 +118,7 @@ class PetFloatingService : Service() {
     private fun getCurrentIdleFrames(): List<Bitmap> {
         if (currentFrames.isNotEmpty()) return currentFrames
         if (gifNames.isNotEmpty() && currentGifIndex < gifNames.size) {
-            Thread { loadFramesForGif(currentGifIndex) }.start()
+            ioExecutor.execute { loadFramesForGif(currentGifIndex) }
         }
         return emptyList()
     }
@@ -146,14 +147,14 @@ class PetFloatingService : Service() {
     private val refreshGifReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "com.petgen.app.REFRESH_GIFS") {
-                Thread {
+                ioExecutor.execute {
                     loadGifList()
                     loadFramesForGif(currentGifIndex)
                     handler.post {
                         currentFrame = 0
                         Toast.makeText(this@PetFloatingService, "素材已刷新", Toast.LENGTH_SHORT).show()
                     }
-                }.start()
+                }
             }
         }
     }
@@ -177,10 +178,12 @@ class PetFloatingService : Service() {
 
             if (currentFrame >= frames.size) {
                 if (isPlayingCustom) {
+                    // 自定义 GIF 播放完，回收并回到 idle
                     isPlayingCustom = false
                     customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = emptyList()
                     currentFrame = 0
+                    // 重新获取 idle 帧，避免访问已回收的位图
                     frames = getCurrentIdleFrames()
                     if (frames.isEmpty()) {
                         handler.postDelayed(this, 100)
@@ -217,6 +220,40 @@ class PetFloatingService : Service() {
         tvBubble.text = bubbleTexts.random()
         tvBubble.visibility = View.VISIBLE
         handler.postDelayed({ tvBubble.visibility = View.GONE }, 3000)
+    }
+
+    // ===== 随机表情（每 10~40 秒随机播放一个表情）=====
+    private val randomEmojiRunnable = object : Runnable {
+        override fun run() {
+            try {
+                if (!isPlayingCustom && gifNames.size > 1) {
+                    playRandomEmoji()
+                }
+            } catch (_: Exception) {}
+            handler.postDelayed(this, (10000 + Math.random() * 30000).toLong())
+        }
+    }
+
+    /** 随机挑选一个与当前待机不同的 GIF，播放一遍后自动回到待机 */
+    private fun playRandomEmoji() {
+        val count = gifNames.size
+        if (count <= 1) return
+        var target = currentGifIndex
+        while (target == currentGifIndex) {
+            target = (Math.random() * count).toInt()
+        }
+        val idx = target
+        ioExecutor.execute {
+            val frames = GifUtils.loadGifFrames(this, gifNames[idx])
+            handler.post {
+                if (frames.isNotEmpty()) {
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames = frames
+                    isPlayingCustom = true
+                    currentFrame = 0
+                }
+            }
+        }
     }
 
     // ===== 触摸/拖动 =====
@@ -286,7 +323,7 @@ class PetFloatingService : Service() {
             return
         }
         val nextIndex = (currentGifIndex + 1) % gifNames.size
-        Thread {
+        ioExecutor.execute {
             val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
             handler.post {
                 if (frames.isNotEmpty()) {
@@ -296,7 +333,7 @@ class PetFloatingService : Service() {
                     currentFrame = 0
                 }
             }
-        }.start()
+        }
     }
 
     // ===== 表情菜单 =====
@@ -327,9 +364,11 @@ class PetFloatingService : Service() {
 
         tvTitle.text = "选择 GIF（${gifNames.size}个）"
 
+        // 点击外部关闭（panel 不消费事件，子按钮可正常点击；点击 panel 空白会冒泡到 menuRoot 关闭）
         menuRoot.setOnClickListener { hideEmojiMenu() }
         btnClose.setOnClickListener { hideEmojiMenu() }
 
+        // 列出所有 GIF
         scrollContent.removeAllViews()
         if (gifNames.isEmpty()) {
             val empty = TextView(this).apply {
@@ -343,40 +382,9 @@ class PetFloatingService : Service() {
         } else {
             gifNames.forEachIndexed { index, name ->
                 val item = createMenuItem(name, index == currentGifIndex)
-                item.setOnClickListener {
-                    currentGifIndex = index
-                    isPlayingCustom = false
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-                    customFrames = emptyList()
-                    Thread {
-                        loadFramesForGif(index)
-                        handler.post {
-                            currentFrame = 0
-                            hideEmojiMenu()
-                            Toast.makeText(this@PetFloatingService, "已切换到 GIF ${index + 1}", Toast.LENGTH_SHORT).show()
-                        }
-                    }.start()
-                }
+                item.setOnClickListener { switchToGif(index) }
                 item.setOnLongClickListener {
-                    if (gifNames.size > 1) {
-                        Thread {
-                            GifUtils.deleteGif(this, name)
-                            handler.post {
-                                loadGifList()
-                                if (currentGifIndex >= gifNames.size) currentGifIndex = 0
-                                Thread {
-                                    loadFramesForGif(currentGifIndex)
-                                    handler.post {
-                                        currentFrame = 0
-                                        hideEmojiMenu()
-                                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
-                                    }
-                                }.start()
-                            }
-                        }.start()
-                    } else {
-                        Toast.makeText(this, "至少保留一个 GIF", Toast.LENGTH_SHORT).show()
-                    }
+                    deleteGifFromMenu(name)
                     true
                 }
                 scrollContent.addView(item)
@@ -392,6 +400,43 @@ class PetFloatingService : Service() {
             windowManager.addView(menuView, menuParams)
         } catch (e: Exception) {
             menuView = null
+        }
+    }
+
+    private fun switchToGif(index: Int) {
+        currentGifIndex = index
+        isPlayingCustom = false
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        customFrames = emptyList()
+        ioExecutor.execute {
+            loadFramesForGif(index)
+            handler.post {
+                currentFrame = 0
+                hideEmojiMenu()
+                Toast.makeText(this@PetFloatingService, "已切换到 GIF ${index + 1}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun deleteGifFromMenu(name: String) {
+        if (gifNames.size <= 1) {
+            Toast.makeText(this, "至少保留一个 GIF", Toast.LENGTH_SHORT).show()
+            return
+        }
+        ioExecutor.execute {
+            GifUtils.deleteGif(this, name)
+            handler.post {
+                loadGifList()
+                if (currentGifIndex >= gifNames.size) currentGifIndex = 0
+                ioExecutor.execute {
+                    loadFramesForGif(currentGifIndex)
+                    handler.post {
+                        currentFrame = 0
+                        hideEmojiMenu()
+                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 
@@ -448,6 +493,7 @@ class PetFloatingService : Service() {
         loadSoundSettings()
         loadGifList()
 
+        // 初始化音效
         soundPool = SoundPool.Builder()
             .setMaxStreams(3)
             .setAudioAttributes(
@@ -463,6 +509,7 @@ class PetFloatingService : Service() {
         petView = LayoutInflater.from(this).inflate(R.layout.pet_floating, null)
         ivPet = petView.findViewById(R.id.ivPet)
         tvBubble = petView.findViewById(R.id.tvBubble)
+        // 没素材时显示默认占位
         placeholderBitmap = createPlaceholderBitmap()
         ivPet.setImageBitmap(placeholderBitmap)
 
@@ -492,27 +539,36 @@ class PetFloatingService : Service() {
             return
         }
 
+        // 注册广播（NOT_EXPORTED 防止任意 App 伪造广播操控桌宠）
         try {
+            val fSize = IntentFilter("com.petgen.app.UPDATE_SIZE")
+            val fBubble = IntentFilter("com.petgen.app.UPDATE_BUBBLE")
+            val fRefresh = IntentFilter("com.petgen.app.REFRESH_GIFS")
+            val fSound = IntentFilter("com.petgen.app.UPDATE_SOUND")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(sizeReceiver, IntentFilter("com.petgen.app.UPDATE_SIZE"), Context.RECEIVER_NOT_EXPORTED)
-                registerReceiver(bubbleReceiver, IntentFilter("com.petgen.app.UPDATE_BUBBLE"), Context.RECEIVER_NOT_EXPORTED)
-                registerReceiver(refreshGifReceiver, IntentFilter("com.petgen.app.REFRESH_GIFS"), Context.RECEIVER_NOT_EXPORTED)
-                registerReceiver(soundReceiver, IntentFilter("com.petgen.app.UPDATE_SOUND"), Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(sizeReceiver, fSize, Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(bubbleReceiver, fBubble, Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(refreshGifReceiver, fRefresh, Context.RECEIVER_NOT_EXPORTED)
+                registerReceiver(soundReceiver, fSound, Context.RECEIVER_NOT_EXPORTED)
             } else {
-                registerReceiver(sizeReceiver, IntentFilter("com.petgen.app.UPDATE_SIZE"))
-                registerReceiver(bubbleReceiver, IntentFilter("com.petgen.app.UPDATE_BUBBLE"))
-                registerReceiver(refreshGifReceiver, IntentFilter("com.petgen.app.REFRESH_GIFS"))
-                registerReceiver(soundReceiver, IntentFilter("com.petgen.app.UPDATE_SOUND"))
+                ContextCompat.registerReceiver(this, sizeReceiver, fSize, ContextCompat.RECEIVER_NOT_EXPORTED)
+                ContextCompat.registerReceiver(this, bubbleReceiver, fBubble, ContextCompat.RECEIVER_NOT_EXPORTED)
+                ContextCompat.registerReceiver(this, refreshGifReceiver, fRefresh, ContextCompat.RECEIVER_NOT_EXPORTED)
+                ContextCompat.registerReceiver(this, soundReceiver, fSound, ContextCompat.RECEIVER_NOT_EXPORTED)
             }
         } catch (e: Exception) { e.printStackTrace() }
 
+        // 启动动画、气泡和随机表情
         handler.post(animationRunnable)
         handler.postDelayed(bubbleRunnable, 5000)
+        handler.postDelayed(randomEmojiRunnable, 8000)
 
-        Thread {
+        // 后台加载初始帧，避免阻塞主线程
+        ioExecutor.execute {
             loadFramesForGif(currentGifIndex)
-        }.start()
+        }
 
+        // Android 14+ 必须传入前台服务类型；用 specialUse 适合长期运行的桌宠
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(NOTIFICATION_ID, buildNotification(),
@@ -521,6 +577,7 @@ class PetFloatingService : Service() {
                 startForeground(NOTIFICATION_ID, buildNotification())
             }
         } catch (e: Exception) {
+            // 兜底：不带类型启动
             try { startForeground(NOTIFICATION_ID, buildNotification()) } catch (_: Exception) {}
         }
     }
@@ -532,15 +589,21 @@ class PetFloatingService : Service() {
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bmp)
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        val cx = size / 2f
+        val cy = size / 2f
+        // 蓝色圆形身体
         paint.color = 0xFF4A90D9.toInt()
-        canvas.drawCircle(size/2f, size/2f, size*0.38f, paint)
+        canvas.drawCircle(cx, cy, size * 0.40f, paint)
+        // 白色爪印：掌垫 + 四指（坐标均相对圆心，确保在圆内可见）
         paint.color = 0xFFFFFFFF.toInt()
-        val cx = size/2f; val cy = size*0.55f
-        canvas.drawOval(cx-size*0.12f, cy-size*0.09f, cx+size*0.12f, cy+size*0.09f, paint)
-        val toeR = size*0.04f
-        val toeY = size*0.38f
-        for (dx in floatArrayOf(-size*0.12f, -size*0.04f, size*0.04f, size*0.12f)) {
-            canvas.drawCircle(cx+dx, toeY, toeR, paint)
+        val padW = size * 0.14f
+        val padH = size * 0.10f
+        val padTop = cy + size * 0.04f
+        canvas.drawOval(cx - padW, padTop, cx + padW, padTop + padH, paint)
+        val toeR = size * 0.045f
+        val toeY = cy - size * 0.08f
+        for (dx in floatArrayOf(-size * 0.13f, -size * 0.045f, size * 0.045f, size * 0.13f)) {
+            canvas.drawCircle(cx + dx, toeY, toeR, paint)
         }
         return bmp
     }
@@ -574,6 +637,7 @@ class PetFloatingService : Service() {
         soundPool = null
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
+        // 回收位图
         currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
