@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/1Ty56lryZB" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/7Y93yAYQxt" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -31,13 +31,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 桌宠生成器 v2.3.4
+          name: 桌宠生成器 v2.4.0
           prerelease: false
           make_latest: true
           body: |
-            ## 桌宠生成器 v2.3.4
+            ## 桌宠生成器 v2.4.0
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
+
+            ### v2.4.0
+            - 新增随机表情：每 10~40 秒随机播放一个 GIF 表情，播完自动回到待机
+            - 与「自言自语气泡」同节奏，桌宠更生动
 
             ### v2.3.4
             - 安全：广播接收器改为 NOT_EXPORTED，防止任意 App 伪造广播操控桌宠
