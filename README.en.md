@@ -6,7 +6,7 @@ An Android desktop pet generator — upload any GIF sticker, and it becomes an i
 
 ## Download
 
-**[Download the latest APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)** (v2.3.4, 4.7MB, release-signed)
+**[Download the latest APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)** (v2.4.0, 4.7MB, release-signed)
 
 Also available on the [Releases page](https://github.com/fish133/pet-generator/releases/tag/latest).
 
@@ -21,6 +21,7 @@ Also available on the [Releases page](https://github.com/fish133/pet-generator/r
 - **GIF to pet**: pick any GIF from your gallery, frames are extracted automatically
 - **Frame count options**: choose 12 / 15 / 30 frames when uploading, balancing smoothness and detail
 - **Tap to switch GIF**: tap the pet to play the next GIF
+- **Random emoji**: every 10-40 seconds a random GIF emoji plays, then returns to idle
 - **Tap sound effects**: optional duck or bing-bing sound, plays when you tap the pet
 - **Long-press menu**: open emoji menu, switch idle GIF, long-press to delete, close the pet
 - **Custom size**: slider from 80 to 800dp
@@ -46,6 +47,10 @@ Also available on the [Releases page](https://github.com/fish133/pet-generator/r
 **Sound effects:** below the bubble text on the main screen, enable "Tap Sound Effect" and choose Duck or Bing-bing.
 
 ## Changelog
+
+### v2.4.0
+- New random emoji: every 10-40 seconds a random GIF emoji plays, then returns to idle
+- Same rhythm as the speech bubbles, making the pet more lively
 
 ### v2.3.4
 - Security: broadcast receiver set to NOT_EXPORTED to prevent other apps from spoofing controls
