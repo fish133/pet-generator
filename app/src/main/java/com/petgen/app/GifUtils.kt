@@ -10,6 +10,10 @@ import java.io.FileOutputStream
 
 object GifUtils {
 
+    /**
+     * 从 Uri 解析 GIF，提取最多 maxFrames 帧，保存到目标目录
+     * @return 保存的帧文件列表
+     */
     fun extractGifFrames(
         context: Context,
         gifUri: Uri,
@@ -42,22 +46,31 @@ object GifUtils {
 
         val savedFiles = mutableListOf<File>()
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        // 创建透明背景的 Bitmap（限制工作尺寸，防止超大 GIF 直接 OOM）
+        val workScale = minOf(1f, 1024f / maxOf(width, height))
+        val workW = (width * workScale).toInt().coerceAtLeast(1)
+        val workH = (height * workScale).toInt().coerceAtLeast(1)
+        val bitmap = Bitmap.createBitmap(workW, workH, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         for ((index, frameIdx) in frameIndices.withIndex()) {
+            // 计算该帧的时间点
             val timeMs = if (totalFrames > 1) {
                 (frameIdx * movie.duration() / totalFrames).coerceAtMost(movie.duration() - 1)
             } else 0
 
             canvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR)
             movie.setTime(timeMs)
+            canvas.save()
+            canvas.scale(workScale, workScale)
             movie.draw(canvas, 0f, 0f)
+            canvas.restore()
 
-            val scaled = if (width != targetSize || height != targetSize) {
-                val scale = minOf(targetSize.toFloat() / width, targetSize.toFloat() / height)
-                val sw = (width * scale).toInt()
-                val sh = (height * scale).toInt()
+            // 缩放到目标尺寸，保持比例
+            val scaled = if (workW != targetSize || workH != targetSize) {
+                val scale = minOf(targetSize.toFloat() / workW, targetSize.toFloat() / workH)
+                val sw = (workW * scale).toInt()
+                val sh = (workH * scale).toInt()
                 val result = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
                 val c = Canvas(result)
                 val tmp = Bitmap.createScaledBitmap(bitmap, sw, sh, true)
@@ -78,54 +91,76 @@ object GifUtils {
         return savedFiles
     }
 
+    /**
+     * 估算 GIF 帧数（通过遍历时间点检测画面变化）
+     */
     private fun estimateFrameCount(movie: Movie): Int {
         val duration = movie.duration()
         if (duration <= 0) return 1
 
+        // 限制采样 bitmap 尺寸，防止超大 GIF 直接 OOM
         val width = movie.width()
         val height = movie.height()
-        val bmp1 = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val bmp2 = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val workScale = minOf(1f, 512f / maxOf(width, height))
+        val w = (width * workScale).toInt().coerceAtLeast(1)
+        val h = (height * workScale).toInt().coerceAtLeast(1)
+        val bmp1 = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val bmp2 = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val c1 = Canvas(bmp1)
         val c2 = Canvas(bmp2)
 
         var frameCount = 0
         var t = 0
-        val step = 30
+        val step = 20 // 20ms 步长，更密采样减少漏帧
+        var iterations = 0
+        val maxIterations = 800 // 最多采样 16 秒，防止超长 GIF 导致帧估计卡死
 
-        while (t < duration) {
+        while (t < duration && iterations < maxIterations) {
             c2.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR)
             movie.setTime(t)
+            c2.save()
+            c2.scale(workScale, workScale)
             movie.draw(c2, 0f, 0f)
+            c2.restore()
 
             if (t == 0 || !bitmapsEqual(bmp1, bmp2)) {
                 frameCount++
+                // 复制 bmp2 到 bmp1
                 c1.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR)
                 c1.drawBitmap(bmp2, 0f, 0f, null)
             }
             t += step
+            iterations++
         }
 
         bmp1.recycle()
         bmp2.recycle()
 
+        // 至少 1 帧，最多 60 帧
         return frameCount.coerceIn(1, 60)
     }
 
     private fun bitmapsEqual(b1: Bitmap, b2: Bitmap): Boolean {
         if (b1.width != b2.width || b1.height != b2.height) return false
-        for (y in 0 until b1.height step 4) {
-            for (x in 0 until b1.width step 4) {
+        // 采样比较（每 2 个像素比一个，减少局部动画漏检）
+        for (y in 0 until b1.height step 2) {
+            for (x in 0 until b1.width step 2) {
                 if (b1.getPixel(x, y) != b2.getPixel(x, y)) return false
             }
         }
         return true
     }
 
+    /**
+     * 获取用户上传的 GIF 存储根目录
+     */
     fun getGifRootDir(context: Context): File {
         return File(context.filesDir, "pet_gifs").apply { mkdirs() }
     }
 
+    /**
+     * 获取所有已上传的 GIF 名称列表（目录名）
+     */
     fun getGifList(context: Context): List<String> {
         val root = getGifRootDir(context)
         return root.listFiles { f -> f.isDirectory && f.listFiles { _, n -> n.startsWith("frame_") }?.isNotEmpty() == true }
@@ -134,6 +169,9 @@ object GifUtils {
             ?: emptyList()
     }
 
+    /**
+     * 加载某个 GIF 的所有帧为 Bitmap（缩放到 512x512 节省内存）
+     */
     fun loadGifFrames(context: Context, gifName: String, targetSize: Int = 512): List<Bitmap> {
         val dir = File(getGifRootDir(context), gifName)
         val frames = mutableListOf<Bitmap>()
@@ -147,6 +185,7 @@ object GifUtils {
             try {
                 val bmp = android.graphics.BitmapFactory.decodeFile(file.absolutePath, opts)
                 if (bmp != null) {
+                    // 缩放到 targetSize，保持比例居中
                     val scaled = if (bmp.width != targetSize || bmp.height != targetSize) {
                         val scale = minOf(targetSize.toFloat() / bmp.width, targetSize.toFloat() / bmp.height)
                         val sw = (bmp.width * scale).toInt()
@@ -167,6 +206,9 @@ object GifUtils {
         return frames
     }
 
+    /**
+     * 删除某个 GIF
+     */
     fun deleteGif(context: Context, gifName: String): Boolean {
         val dir = File(getGifRootDir(context), gifName)
         return dir.deleteRecursively()
