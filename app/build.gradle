@@ -1,4 +1,4 @@
-// 桌宠生成器 v2.4.0 (versionCode 39) - random emoji feature - release trigger
+// 桌宠生成器 v2.4.1 (versionCode 40) - bug fix release
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
@@ -12,8 +12,8 @@ android {
         applicationId "com.petgen.app"
         minSdk 24
         targetSdk 34
-        versionCode 39
-        versionName "2.4.0"
+        versionCode 40
+        versionName "2.4.1"
     }
 
     signingConfigs {
