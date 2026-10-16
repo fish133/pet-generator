@@ -180,7 +180,7 @@ class PetFloatingService : Service() {
                 if (isPlayingCustom) {
                     // 自定义 GIF 播放完，回收并回到 idle
                     isPlayingCustom = false
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
                     customFrames = emptyList()
                     currentFrame = 0
                     // 重新获取 idle 帧，避免访问已回收的位图
@@ -247,7 +247,7 @@ class PetFloatingService : Service() {
             val frames = GifUtils.loadGifFrames(this, gifNames[idx])
             handler.post {
                 if (frames.isNotEmpty()) {
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
                     customFrames = frames
                     isPlayingCustom = true
                     currentFrame = 0
@@ -327,7 +327,7 @@ class PetFloatingService : Service() {
             val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
             handler.post {
                 if (frames.isNotEmpty()) {
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
                     customFrames = frames
                     isPlayingCustom = true
                     currentFrame = 0
@@ -406,7 +406,7 @@ class PetFloatingService : Service() {
     private fun switchToGif(index: Int) {
         currentGifIndex = index
         isPlayingCustom = false
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
         customFrames = emptyList()
         ioExecutor.execute {
             loadFramesForGif(index)
@@ -561,7 +561,7 @@ class PetFloatingService : Service() {
         // 启动动画、气泡和随机表情
         handler.post(animationRunnable)
         handler.postDelayed(bubbleRunnable, 5000)
-        handler.postDelayed(randomEmojiRunnable, 8000)
+        handler.postDelayed(randomEmojiRunnable, 10000)
 
         // 后台加载初始帧，避免阻塞主线程
         ioExecutor.execute {
@@ -638,9 +638,9 @@ class PetFloatingService : Service() {
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
         // 回收位图
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}}
         placeholderBitmap = null
     }
 
