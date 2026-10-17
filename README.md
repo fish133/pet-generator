@@ -8,7 +8,7 @@
 
 ## 下载
 
-**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.4.0，4.7MB，正式签名）
+**[点此下载最新 APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)**（v2.4.1，4.7MB，正式签名）
 
 也可在 [Releases 页面](https://github.com/fish133/pet-generator/releases/tag/latest) 查看。
 
@@ -49,6 +49,12 @@
 **音效：** 在主界面气泡文案下方打开「连续点击音效」开关，选择鸭子或冰冰冰音效即可。
 
 ## 更新历史
+
+### v2.4.1
+- 修复超大 GIF 上传时按原始尺寸建 Bitmap 导致的 OOM 崩溃，现限制工作尺寸
+- 帧数估算加密采样（20ms 步长、2px 采样），减少快速动画漏帧导致 GIF 不动
+- 帧数估算采样上限提升到 16 秒，长 GIF 后半段动画不再丢失
+- 随机表情首次触发从 8 秒修正为 10 秒，与 10~40 秒节奏一致
 
 ### v2.4.0
 - 新增随机表情：每 10~40 秒随机播放一个 GIF 表情，播完自动回到待机
