@@ -6,7 +6,7 @@ An Android desktop pet generator — upload any GIF sticker, and it becomes an i
 
 ## Download
 
-**[Download the latest APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)** (v2.4.0, 4.7MB, release-signed)
+**[Download the latest APK](https://github.com/fish133/pet-generator/releases/download/latest/pet-generator-latest.apk)** (v2.4.1, 4.7MB, release-signed)
 
 Also available on the [Releases page](https://github.com/fish133/pet-generator/releases/tag/latest).
 
@@ -47,6 +47,12 @@ Also available on the [Releases page](https://github.com/fish133/pet-generator/r
 **Sound effects:** below the bubble text on the main screen, enable "Tap Sound Effect" and choose Duck or Bing-bing.
 
 ## Changelog
+
+### v2.4.1
+- Fixed OOM crash when uploading oversized GIFs by creating a Bitmap at its original size; work size is now capped
+- Denser frame-estimation sampling (20ms step, 2px) reduces missed fast-animation frames that made the GIF appear frozen
+- Raised the estimation cap to 16 seconds so the latter half of long GIFs is no longer lost
+- Corrected the first random-emoji trigger from 8s to 10s to match the 10-40s rhythm
 
 ### v2.4.0
 - New random emoji: every 10-40 seconds a random GIF emoji plays, then returns to idle
