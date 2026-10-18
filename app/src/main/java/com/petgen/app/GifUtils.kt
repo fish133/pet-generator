@@ -69,8 +69,8 @@ object GifUtils {
             // 缩放到目标尺寸，保持比例
             val scaled = if (workW != targetSize || workH != targetSize) {
                 val scale = minOf(targetSize.toFloat() / workW, targetSize.toFloat() / workH)
-                val sw = (workW * scale).toInt()
-                val sh = (workH * scale).toInt()
+                val sw = (workW * scale).toInt().coerceAtLeast(1)
+                val sh = (workH * scale).toInt().coerceAtLeast(1)
                 val result = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
                 val c = Canvas(result)
                 val tmp = Bitmap.createScaledBitmap(bitmap, sw, sh, true)
@@ -188,8 +188,8 @@ object GifUtils {
                     // 缩放到 targetSize，保持比例居中
                     val scaled = if (bmp.width != targetSize || bmp.height != targetSize) {
                         val scale = minOf(targetSize.toFloat() / bmp.width, targetSize.toFloat() / bmp.height)
-                        val sw = (bmp.width * scale).toInt()
-                        val sh = (bmp.height * scale).toInt()
+                        val sw = (bmp.width * scale).toInt().coerceAtLeast(1)
+                        val sh = (bmp.height * scale).toInt().coerceAtLeast(1)
                         val result = Bitmap.createBitmap(targetSize, targetSize, Bitmap.Config.ARGB_8888)
                         val c = android.graphics.Canvas(result)
                         val tmp = Bitmap.createScaledBitmap(bmp, sw, sh, true)
