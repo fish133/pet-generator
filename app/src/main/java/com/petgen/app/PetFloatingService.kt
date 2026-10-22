@@ -93,6 +93,8 @@ class PetFloatingService : Service() {
     private var currentGifIndex = 0                          // 当前 idle 用的 GIF 索引
     private var isPlayingCustom = false                       // 是否正在播放点击触发的 GIF
     private var customFrames: List<Bitmap> = emptyList()     // 点击触发播放的帧
+    // 已被替换、等待 500ms 延迟回收的旧帧批次（防销毁时漏回收导致 Bitmap 泄漏）
+    private val pendingOldFrames = mutableListOf<List<Bitmap>>()
 
     private fun loadGifList() {
         gifNames = GifUtils.getGifList(this)
@@ -108,10 +110,16 @@ class PetFloatingService : Service() {
         } else {
             emptyList()
         }
-        // 延迟回收旧帧，等待动画线程切换到新帧后再回收，避免 recycled bitmap 崩溃
-        handler.postDelayed({
-            oldFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
-        }, 500)
+        if (oldFrames.isNotEmpty()) {
+            pendingOldFrames.add(oldFrames)
+            // 延迟回收旧帧，等待动画线程切换到新帧后再回收，避免 recycled bitmap 崩溃
+            handler.postDelayed({
+                synchronized(this@PetFloatingService) {
+                    pendingOldFrames.remove(oldFrames)
+                }
+                oldFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+            }, 500)
+        }
         return currentFrames
     }
 
@@ -180,7 +188,7 @@ class PetFloatingService : Service() {
                 if (isPlayingCustom) {
                     // 自定义 GIF 播放完，回收并回到 idle
                     isPlayingCustom = false
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = emptyList()
                     currentFrame = 0
                     // 重新获取 idle 帧，避免访问已回收的位图
@@ -247,7 +255,7 @@ class PetFloatingService : Service() {
             val frames = GifUtils.loadGifFrames(this, gifNames[idx])
             handler.post {
                 if (frames.isNotEmpty()) {
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = frames
                     isPlayingCustom = true
                     currentFrame = 0
@@ -327,7 +335,7 @@ class PetFloatingService : Service() {
             val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
             handler.post {
                 if (frames.isNotEmpty()) {
-                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+                    customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = frames
                     isPlayingCustom = true
                     currentFrame = 0
@@ -406,7 +414,7 @@ class PetFloatingService : Service() {
     private fun switchToGif(index: Int) {
         currentGifIndex = index
         isPlayingCustom = false
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         customFrames = emptyList()
         ioExecutor.execute {
             loadFramesForGif(index)
@@ -491,7 +499,6 @@ class PetFloatingService : Service() {
         petSize = prefs.getInt(MainActivity.KEY_SIZE, MainActivity.DEFAULT_SIZE)
         loadBubbleTexts()
         loadSoundSettings()
-        loadGifList()
 
         // 初始化音效
         soundPool = SoundPool.Builder()
@@ -563,8 +570,9 @@ class PetFloatingService : Service() {
         handler.postDelayed(bubbleRunnable, 5000)
         handler.postDelayed(randomEmojiRunnable, 10000)
 
-        // 后台加载初始帧，避免阻塞主线程
+        // 后台加载素材目录与初始帧，避免主线程磁盘 I/O 造成启动卡顿/ANR
         ioExecutor.execute {
+            loadGifList()
             loadFramesForGif(currentGifIndex)
         }
 
@@ -637,10 +645,16 @@ class PetFloatingService : Service() {
         soundPool = null
         hideEmojiMenu()
         try { windowManager.removeView(petView) } catch (_: Exception) {}
-        // 回收位图
-        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
-        customFrames.forEach { try { it.recycle() } catch (_: Exception) {}}
-        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {}}
+        // 回收位图（含被替换后仍在延迟队列里的旧帧批次，防止泄漏）
+        synchronized(this@PetFloatingService) {
+            pendingOldFrames.forEach { batch ->
+                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
+            }
+            pendingOldFrames.clear()
+        }
+        currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
+        placeholderBitmap?.let { try { it.recycle() } catch (_: Exception) {} }
         placeholderBitmap = null
     }
 
