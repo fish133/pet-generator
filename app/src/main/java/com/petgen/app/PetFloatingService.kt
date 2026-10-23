@@ -33,6 +33,7 @@ import java.util.concurrent.Executors
 class PetFloatingService : Service() {
 
     companion object {
+        @Volatile
         var isRunning = false
         private const val CHANNEL_ID = "pet_service_channel"
         private const val NOTIFICATION_ID = 1001
@@ -95,6 +96,8 @@ class PetFloatingService : Service() {
     private var customFrames: List<Bitmap> = emptyList()     // 点击触发播放的帧
     // 已被替换、等待 500ms 延迟回收的旧帧批次（防销毁时漏回收导致 Bitmap 泄漏）
     private val pendingOldFrames = mutableListOf<List<Bitmap>>()
+    // 已在后台加载、待提交到主线程的自定义帧批次（防 Service 销毁时回调被移除导致 Bitmap 泄漏）
+    private val pendingSubmitCustomFrames = mutableListOf<List<Bitmap>>()
 
     private fun loadGifList() {
         gifNames = GifUtils.getGifList(this)
@@ -253,7 +256,23 @@ class PetFloatingService : Service() {
         val idx = target
         ioExecutor.execute {
             val frames = GifUtils.loadGifFrames(this, gifNames[idx])
+            if (frames.isEmpty()) return@execute
+            // Service 已在后台加载期间销毁：直接回收，不入待提交队列
+            if (!isRunning) {
+                frames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                return@execute
+            }
+            synchronized(this@PetFloatingService) {
+                pendingSubmitCustomFrames.add(frames)
+            }
             handler.post {
+                synchronized(this@PetFloatingService) {
+                    pendingSubmitCustomFrames.remove(frames)
+                }
+                if (!isRunning) {
+                    frames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    return@post
+                }
                 if (frames.isNotEmpty()) {
                     customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = frames
@@ -333,7 +352,23 @@ class PetFloatingService : Service() {
         val nextIndex = (currentGifIndex + 1) % gifNames.size
         ioExecutor.execute {
             val frames = GifUtils.loadGifFrames(this, gifNames[nextIndex])
+            if (frames.isEmpty()) return@execute
+            // Service 已在后台加载期间销毁：直接回收，不入待提交队列
+            if (!isRunning) {
+                frames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                return@execute
+            }
+            synchronized(this@PetFloatingService) {
+                pendingSubmitCustomFrames.add(frames)
+            }
             handler.post {
+                synchronized(this@PetFloatingService) {
+                    pendingSubmitCustomFrames.remove(frames)
+                }
+                if (!isRunning) {
+                    frames.forEach { try { it.recycle() } catch (_: Exception) {} }
+                    return@post
+                }
                 if (frames.isNotEmpty()) {
                     customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
                     customFrames = frames
@@ -651,6 +686,13 @@ class PetFloatingService : Service() {
                 batch.forEach { try { it.recycle() } catch (_: Exception) {} }
             }
             pendingOldFrames.clear()
+        }
+        // 回收尚未提交到主线程的自定义帧批次（回调已被移除，需在此统一兜底）
+        synchronized(this@PetFloatingService) {
+            pendingSubmitCustomFrames.forEach { batch ->
+                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
+            }
+            pendingSubmitCustomFrames.clear()
         }
         currentFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
         customFrames.forEach { try { it.recycle() } catch (_: Exception) {} }
