@@ -682,14 +682,14 @@ class PetFloatingService : Service() {
         // 回收位图（含被替换后仍在延迟队列里的旧帧批次，防止泄漏）
         synchronized(this@PetFloatingService) {
             pendingOldFrames.forEach { batch ->
-                batch.forEach { try { it.recycle() } catch (_: Exception) {}
+                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
             }
             pendingOldFrames.clear()
         }
         // 回收尚未提交到主线程的自定义帧批次（回调已被移除，需在此统一兜底）
         synchronized(this@PetFloatingService) {
             pendingSubmitCustomFrames.forEach { batch ->
-                batch.forEach { try { it.recycle() } catch (_: Exception) {}
+                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
             }
             pendingSubmitCustomFrames.clear()
         }
