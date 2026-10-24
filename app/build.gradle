@@ -1,5 +1,4 @@
-// 桌宠生成器 v2.4.4 (versionCode 43) - bug fix release
-// v2.4.4 changelog: @Volatile 改为代码样式，避免 GitHub 误渲染为 @用户提及
+// 桌宠生成器 v2.4.5 (versionCode 44) - bug fix release
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
@@ -13,8 +12,8 @@ android {
         applicationId "com.petgen.app"
         minSdk 24
         targetSdk 34
-        versionCode 43
-        versionName "2.4.4"
+        versionCode 44
+        versionName "2.4.5"
     }
 
     signingConfigs {
