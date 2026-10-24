@@ -468,17 +468,16 @@ class PetFloatingService : Service() {
         }
         ioExecutor.execute {
             GifUtils.deleteGif(this, name)
+            // 目录扫描与索引夹取均放后台线程，避免主线程 listFiles 造成卡顿/ANR
+            loadGifList()
+            if (currentGifIndex >= gifNames.size) currentGifIndex = 0
+            if (isRunning) {
+                loadFramesForGif(currentGifIndex)
+            }
             handler.post {
-                loadGifList()
-                if (currentGifIndex >= gifNames.size) currentGifIndex = 0
-                ioExecutor.execute {
-                    loadFramesForGif(currentGifIndex)
-                    handler.post {
-                        currentFrame = 0
-                        hideEmojiMenu()
-                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
-                    }
-                }
+                currentFrame = 0
+                hideEmojiMenu()
+                Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -683,14 +682,14 @@ class PetFloatingService : Service() {
         // 回收位图（含被替换后仍在延迟队列里的旧帧批次，防止泄漏）
         synchronized(this@PetFloatingService) {
             pendingOldFrames.forEach { batch ->
-                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
+                batch.forEach { try { it.recycle() } catch (_: Exception) {}
             }
             pendingOldFrames.clear()
         }
         // 回收尚未提交到主线程的自定义帧批次（回调已被移除，需在此统一兜底）
         synchronized(this@PetFloatingService) {
             pendingSubmitCustomFrames.forEach { batch ->
-                batch.forEach { try { it.recycle() } catch (_: Exception) {} }
+                batch.forEach { try { it.recycle() } catch (_: Exception) {}
             }
             pendingSubmitCustomFrames.clear()
         }
