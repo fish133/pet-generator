@@ -20,7 +20,7 @@ jobs:
       - name: Download latest APK
         run: |
           for i in 1 2 3; do
-            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/9fztV1fqC4" && break
+            curl -L --retry 3 --retry-delay 5 -o pet-generator-latest.apk "https://aka.doubaocdn.com/s/LTje9C3F1q" && break
             echo "Download attempt $i failed, retrying..."
             sleep 5
           done
@@ -31,13 +31,17 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 桌宠生成器 v2.4.4
+          name: 桌宠生成器 v2.4.5
           prerelease: false
           make_latest: true
           body: |
-            ## 桌宠生成器 v2.4.4
+            ## 桌宠生成器 v2.4.5
 
             上传任意 GIF 表情包，自动变成可互动的安卓桌面悬浮窗桌宠。
+
+            ### v2.4.5
+            - 修复长按删除 GIF 时目录扫描（listFiles）在主线程执行导致的卡顿/ANR，删除素材后目录刷新与索引夹取全部移到后台线程
+            - 修复 GIF 解析异常中断时半成品目录与损坏帧未清理的问题，异常路径兜底删除残留文件
 
             ### v2.4.4
             - 修复点击切换 / 随机表情后台加载出的自定义帧在 Service 销毁时回调被移除导致的 Bitmap 泄漏，销毁时统一兜底回收待提交批次
