@@ -1,4 +1,5 @@
 // 桌宠生成器 v2.4.4 (versionCode 43) - bug fix release
+// v2.4.4 changelog: @Volatile 改为代码样式，避免 GitHub 误渲染为 @用户提及
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
