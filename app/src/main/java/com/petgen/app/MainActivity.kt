@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.petgen.app.databinding.ActivityMainBinding
 import java.io.File
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
         const val KEY_SOUND_TYPE = "sound_type"
         const val DEFAULT_SIZE = 280
         private const val REQUEST_PICK_GIF = 1001
+        // 统一后台线程池，避免频繁 new Thread
+        private val ioExecutor = Executors.newFixedThreadPool(2)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +39,7 @@ class MainActivity : AppCompatActivity() {
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
 
+        // Android 13+ 请求通知权限（前台服务需要）
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 2001)
@@ -95,6 +99,7 @@ class MainActivity : AppCompatActivity() {
             try {
                 startActivityForResult(intent, REQUEST_PICK_GIF)
             } catch (e: Exception) {
+                // 降级：用 GET_CONTENT
                 val fallback = Intent(Intent.ACTION_GET_CONTENT).apply {
                     type = "image/gif"
                 }
@@ -138,46 +143,52 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleGifUpload(uri: Uri) {
+        // 读取用户选择的帧数
         val maxFrames = when (binding.rgFrameCount.checkedRadioButtonId) {
             binding.rb12.id -> 12
             binding.rb30.id -> 30
             else -> 15
         }
         Toast.makeText(this, "正在解析 GIF（${maxFrames}帧）...", Toast.LENGTH_SHORT).show()
-        Thread {
+        var outputDir: File? = null
+        ioExecutor.execute {
             try {
+                // 生成唯一名称（用时间戳）
                 val gifName = "gif_${System.currentTimeMillis()}"
-                val outputDir = File(GifUtils.getGifRootDir(this), gifName)
-                val frames = GifUtils.extractGifFrames(this, uri, outputDir, maxFrames = maxFrames, targetSize = 512)
+                outputDir = File(GifUtils.getGifRootDir(this), gifName)
+                val frames = GifUtils.extractGifFrames(this, uri, outputDir!!, maxFrames = maxFrames, targetSize = 512)
 
                 runOnUiThread {
                     if (frames.isNotEmpty()) {
                         Toast.makeText(this, "上传成功！已提取 ${frames.size} 帧", Toast.LENGTH_SHORT).show()
                         updateGifCount()
+                        // 如果桌宠正在运行，通知刷新素材
                         if (isRunning) {
                             sendBroadcast(Intent("com.petgen.app.REFRESH_GIFS"))
                         }
                     } else {
                         Toast.makeText(this, "解析失败，请确认是 GIF 格式", Toast.LENGTH_SHORT).show()
-                        outputDir.deleteRecursively()
+                        outputDir?.deleteRecursively()
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                // 异常中断时清理半成品目录与损坏帧，避免残留磁盘垃圾
+                outputDir?.deleteRecursively()
                 runOnUiThread {
                     Toast.makeText(this, "解析出错：${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-        }.start()
+        }
     }
 
     private fun updateGifCount() {
-        Thread {
+        ioExecutor.execute {
             val count = GifUtils.getGifList(this).size
             runOnUiThread {
                 binding.tvGifCount.text = "已上传 $count 个 GIF"
             }
-        }.start()
+        }
     }
 
     override fun onResume() {
